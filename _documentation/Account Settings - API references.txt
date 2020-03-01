@@ -1,0 +1,66 @@
+1)email_settings
+a)get email                                                                             <- Done
+-get                                                                                    <- Done
+-req=>                                                                                  <- Done
+	user_id                                                                             <- Done
+-res=>                                                                                  <- Done
+	email                                                                               <- Done
+	ok                                                                                  <- Done
+
+b)change email **OTP inclusion**
+
+-post                                                                                  <-  Done
+-req=>                                                                                 <-  Done
+	user_id                                                                            <-  Done
+	new_email                                                                          <-  Done
+-res=>                                                                                 <-  Done
+	(len(before '@' in new_email)>64) => "local part exceeds 64 character length"      <-  Done
+	(len(after '@' in new_email)>255) => "domain part exceeds 255 character length"    <-  Done
+	(len(new_email)>320) => "total length exceeds 320 character length"                <-  Done
+	(valid_email(new_email)) => “Kindly enter a valid Email Id”                        <-  Done
+	(new_email=="") => “Kindly specify your Email Id”                                  <-  Done
+	(exist(new_email)) => "Email Id is already registered with us”                     <-  Done
+
+2)change password                                                                      <-  Done
+-post                                                                                  <-  Done
+-req=>                                                                                 <-  Done
+	user_id                                                                            <-  Done
+	old_pwd                                                                            <-  Done
+	new_pwd                                                                            <-  Done
+	conf_pwd                                                                           <-  Done
+-res=>                                                                                 <-  Done
+	(old_pwd!=saved) => “Entered password is incorrect”                                <-  Done
+	(new_pwd=="") => “Kindly enter a new password”                                     <-  Done
+	(conf_pwd=="") => “Kindly enter the password again”                                <-  Done
+	(new_pwd!=conf_pwd) => “Entered password doesn’t match, please enter it again”     <-  Done
+	success => “The password is changed successfully!”                                 <-  Done
+
+3)delete my account
+-post
+-req=>
+	user_id
+	reason
+-res=>
+	(user!=SuperUser) => { send_deletion_reminder(delete_account(self.delete(), 2 days),58 days) : { (len(SuperUser)>1) => send_deletion_reminder(delete_account(self, 2 days),58 days) : “It looks like you’re the only Super User here, you can’t delete the account unless you assign one more Super User/Admin here \nNote: Only Shenzyn admin shall delete the organisation account completely” } }
+
+4)Subuser Control
+a)get userlist
+-get
+-req=>
+	user_id
+	status in (activated,suspended,deleted)
+-res=>
+	(user_id in SuperUser) => (id,name,email,role,permission,status,[(status==suspended) => reason, suspended_for, date_time_of_suspension | (status==deleted) => reason, data_time_of_deletion] ) for user in allUsers
+
+b)activate/suspend/delete account                                                                   <- Done
+-post                                                                                               <- Done
+-req=>                                                                                              <- Done
+	user_id                                                                                         <- Done
+	action in (activate,suspend,delete)                                                             <- Done
+	id                                                                                              <- Done
+	time_period                                                                                     <- Done
+-res=>                                                                                              <- Done
+	(action==suspend) => suspend_user(id,activate(id),time_period) //send_suspension_mail(id)       <- Done
+	(action==delete) => delete_user(id) //send_deletion_mail(id)                                    <- Done
+	(action==activate) => activate(id) //send_activation_mail(id)                                   <- Done
+
